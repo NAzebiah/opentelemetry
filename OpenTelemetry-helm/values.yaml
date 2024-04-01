@@ -1,0 +1,46 @@
+# values.yaml for the parent chart opentelemetry-helm
+
+# Default values for opentelemetry-app sub-chart
+opentelemetry-app:
+  replicaCount: 1
+  image:
+    repository: nginx
+    pullPolicy: IfNotPresent
+    tag: ""
+  # Additional default values for opentelemetry-app...
+
+# Default values for opentelemetry-collector sub-chart
+opentelemetry-collector:
+  replicaCount: 1
+  image:
+    repository: otel/opentelemetry-collector-contrib
+    tag: 0.82.0
+    pullPolicy: IfNotPresent
+  # Additional default values for opentelemetry-collector...
+
+# Default values for jaeger sub-chart
+jaeger:
+  replicaCount: 1
+  image:
+    repository: jaegertracing/all-in-one
+    tag: 1.45.0
+    pullPolicy: IfNotPresent
+  # Additional default values for jaeger...
+
+# Default values for prometheus sub-chart
+prometheus:
+  replicaCount: 1
+  image:
+    repository: quay.io/prometheus/prometheus
+    tag: v2.46.0
+    pullPolicy: IfNotPresent
+  # Additional default values for prometheus...
+
+# Default values for grafana sub-chart
+grafana:
+  replicaCount: 1
+  image:
+    repository: docker.io/grafana/grafana
+    tag: 10.0.3
+    pullPolicy: IfNotPresent
+  # Additional default values for grafana...

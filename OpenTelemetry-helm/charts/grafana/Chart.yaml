@@ -1,0 +1,4 @@
+apiVersion: v2
+name: grafana
+description: A Helm chart for deploying OpenTelemetry Grafana in Kubernetes
+version: 1.0.0
