@@ -1,103 +1,41 @@
-# Default values for jaeger.
+# Default values for jaeger-all-in-one.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+enabled: true
 replicaCount: 1
 
 image:
   repository: jaegertracing/all-in-one
-  tag: 1.45.0
   pullPolicy: IfNotPresent
+  versionOverride: "*"
 
-serviceAgent:
-  ports:
-    - name: zk-compact-trft
-      port: 5775
-      protocol: UDP
-    - name: config-rest
-      port: 5778
-      protocol: TCP
-    - name: jg-compact-trft
-      port: 6831
-      protocol: UDP
-    - name: jg-binary-trft
-      port: 6832
-      protocol: UDP
-
-serviceCollector:
-  ports:
-    - name: http-zipkin
-      port: 9411
-    - name: grpc-http
-      port: 14250
-    - name: c-tchan-trft
-      port: 14267
-    - name: http-c-binary-trft
-      port: 14268
-    - name: otlp-grpc
-      port: 4317
-    - name: otlp-http
-      port: 4318
-
-serviceQuery:
-  ports:
-    - name: http-query
-      port: 16686
-    - name: grpc-query
-      port: 16685
-
-resources:
-  limits:
-    memory: 300Mi
-
-
-serviceAccount:
-  create: true
-  name: opentelemetry-demo-jaeger
-
-services:
-  main:
-    type: ClusterIP
-    ports:
-      - name: http-query
-        port: 16686
-        targetPort: http-query
-      - name: grpc-query
-        port: 16685
-        targetPort: grpc-query
-  agent:
-    clusterIP: None
-    ports:
-      - name: zk-compact-trft
-        port: 5775
-        protocol: UDP
-      # Add other ports here
-  collector:
-    clusterIP: None
-    ports:
-      - name: http-zipkin
-        port: 9411
-      # Add other ports here
-  query:
-    clusterIP: None
-    ports:
-      - name: http-query
-        port: 16686
-      # Add other ports here
-
-config:
-  env:
-    - name: METRICS_STORAGE_TYPE
-      value: prometheus
-    - name: SPAN_STORAGE_TYPE
-      value: memory
-    # Add other environment variables here
-
+healthCheckUrl: /
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
+terminationGracePeriodSeconds: 10
+environmentVariables:
+  MEMORY_MAX_TRACES: 100000
+  SPAN_STORAGE_TYPE: badger
+  BADGER_EPHEMERAL: false
+  BADGER_DIRECTORY_VALUE: /badger/data
+  BADGER_DIRECTORY_KEY: /badger/key
 
-podAnnotations: {}
+enableHttpZipkinCollector: false
+enableHttpOpenTelemetryCollector: false
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+podAnnotations: 
+  prometheus.io/scrape: "true"
+  prometheus.io/path: "/metrics"
+  prometheus.io/port: "14269"
 
 podSecurityContext: {}
   # fsGroup: 2000
@@ -110,31 +48,67 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
+service:
+  type: ClusterIP
+  port: 16686
+  annotations:
+    prometheus.io/probe: "true"
+    prometheus.io/probe-path: "/"
+  headless:
+    annotations: {}
+
 ingress:
   enabled: false
   className: ""
   annotations: {}
     # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
+    # cert-manager.io/cluster-issuer: letsencrypt
+    # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
   hosts:
-    - host: chart-example.local
+    - host: jaeger.local
       paths:
         - path: /
           pathType: ImplementationSpecific
   tls: []
-  #  - secretName: chart-example-tls
+  #  - secretName: jaeger-tls
   #    hosts:
-  #      - chart-example.local
+  #      - jaeger.local
 
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
 
 nodeSelector: {}
 
 tolerations: []
 
 affinity: {}
+
+volume:
+  enabled: true
+  className: ""
+  size: 3Gi
+
+tests:
+  enabled: true
+
+livenessProbe:
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+  successThreshold: 1

@@ -1,15 +1,17 @@
+{{- if .Values.tests.enabled }}
 apiVersion: v1
 kind: Pod
 metadata:
-  name: "{{ printf "%s-test-connection" (include "jaeger.fullname" .) }}"
+  name: "{{ include "jaeger-all-in-one.fullname" . }}-test-connection"
   labels:
-    {{- include "jaeger.labels" . | nindent 4 }}
+{{ include "jaeger-all-in-one.labels" . | nindent 4 }}
   annotations:
-    "helm.sh/hook": test
+    "helm.sh/hook": test-success
 spec:
   containers:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ printf "%s-query:%d" (include "jaeger.fullname" .) (index .Values.services.query.ports 0).port }}']
+      args:  ['{{ include "jaeger-all-in-one.fullname" . }}:{{ .Values.service.port }}']
   restartPolicy: Never
+{{- end }}
